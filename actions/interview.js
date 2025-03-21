@@ -144,7 +144,7 @@ export async function getAssessments() {
         userId: user.id,
       },
       orderBy: {
-        createdAt: "asc",
+        createdAt: "desc",
       },
     });
 
@@ -152,5 +152,42 @@ export async function getAssessments() {
   } catch (error) {
     console.error("Error fetching assessments:", error);
     throw new Error("Failed to fetch assessments");
+  }
+}
+
+export async function deleteAssessment(assessmentId) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  const user = await db.user.findUnique({
+    where: { clerkUserId: userId },
+  });
+
+  if (!user) throw new Error("User not found");
+
+  try {
+    // First verify the assessment belongs to this user
+    const assessment = await db.assessment.findFirst({
+      where: {
+        id: assessmentId,
+        userId: user.id,
+      },
+    });
+
+    if (!assessment) {
+      throw new Error("Assessment not found or you don't have permission to delete it");
+    }
+
+    // If the assessment exists and belongs to the user, delete it
+    await db.assessment.delete({
+      where: {
+        id: assessmentId,
+      },
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting assessment:", error);
+    throw new Error("Failed to delete assessment: " + error.message);
   }
 }
