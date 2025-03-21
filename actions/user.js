@@ -95,3 +95,18 @@ export async function getUserOnboardingStatus() {
     throw new Error("Failed to check onboarding status");
   }
 }
+
+
+export async function getUserProfile() {
+  const { userId } = auth();
+  
+  if (!userId) {
+    return null;
+  }
+  
+  const user = await db.user.findUnique({
+    where: { clerkUserId: userId },
+  });
+  
+  return user;
+}
