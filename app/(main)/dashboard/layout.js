@@ -9,8 +9,10 @@ export default function Layout({ children }) {
     <div className="px-5">
       <div className="flex items-center justify-between mb-5">
         <h1 className="text-6xl font-bold gradient-title">Industry Insights</h1>
-        <Link href="/onboarding">
-          <Edit className="w-6 h-6 cursor-pointer" />
+        <Link href="/onboarding?mode=edit&returnTo=/dashboard" aria-label="Edit industry profile">
+          <Button variant="ghost" size="icon" className="rounded-full">
+            <Edit className="w-5 h-5" />
+          </Button>
         </Link>
       </div>
       <Suspense

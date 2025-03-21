@@ -63,8 +63,8 @@ export async function improveWithAI({ current, type }) {
 
   const user = await db.user.findUnique({
     where: { clerkUserId: userId },
-    include: {
-      industryInsight: true,
+    select: {
+      industry: true,
     },
   });
 

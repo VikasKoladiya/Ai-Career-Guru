@@ -29,16 +29,41 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 
 const DashboardView = ({ insights }) => {
-  // Transform salary data for the chart
-  const salaryData = insights.salaryRanges.map((range) => ({
-    name: range.role,
-    min: range.min / 1000,
-    max: range.max / 1000,
-    median: range.median / 1000,
+  // Safety check for null or invalid insights
+  if (!insights || typeof insights !== 'object') {
+    return (
+      <div className="flex items-center justify-center h-[50vh]">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold">Unable to load industry insights</h2>
+          <p className="text-muted-foreground">Please try refreshing the page</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Ensure all required properties exist with fallbacks
+  const safeInsights = {
+    salaryRanges: Array.isArray(insights.salaryRanges) ? insights.salaryRanges : [],
+    growthRate: typeof insights.growthRate === 'number' ? insights.growthRate : 0,
+    demandLevel: insights.demandLevel || 'Unknown',
+    topSkills: Array.isArray(insights.topSkills) ? insights.topSkills : [],
+    marketOutlook: insights.marketOutlook || 'Unknown',
+    keyTrends: Array.isArray(insights.keyTrends) ? insights.keyTrends : [],
+    recommendedSkills: Array.isArray(insights.recommendedSkills) ? insights.recommendedSkills : [],
+    lastUpdated: insights.lastUpdated || new Date(),
+    nextUpdate: insights.nextUpdate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+  };
+
+  // Transform salary data for the chart - with safety checks
+  const salaryData = safeInsights.salaryRanges.map((range) => ({
+    name: range.role || 'Unknown Role',
+    min: typeof range.min === 'number' ? range.min / 1000 : 0,
+    max: typeof range.max === 'number' ? range.max / 1000 : 0,
+    median: typeof range.median === 'number' ? range.median / 1000 : 0,
   }));
 
   const getDemandLevelColor = (level) => {
-    switch (level.toLowerCase()) {
+    switch (String(level).toLowerCase()) {
       case "high":
         return "bg-green-500";
       case "medium":
@@ -51,7 +76,7 @@ const DashboardView = ({ insights }) => {
   };
 
   const getMarketOutlookInfo = (outlook) => {
-    switch (outlook.toLowerCase()) {
+    switch (String(outlook).toLowerCase()) {
       case "positive":
         return { icon: TrendingUp, color: "text-green-500" };
       case "neutral":
@@ -63,15 +88,21 @@ const DashboardView = ({ insights }) => {
     }
   };
 
-  const OutlookIcon = getMarketOutlookInfo(insights.marketOutlook).icon;
-  const outlookColor = getMarketOutlookInfo(insights.marketOutlook).color;
+  const OutlookIcon = getMarketOutlookInfo(safeInsights.marketOutlook).icon;
+  const outlookColor = getMarketOutlookInfo(safeInsights.marketOutlook).color;
 
-  // Format dates using date-fns
-  const lastUpdatedDate = format(new Date(insights.lastUpdated), "dd/MM/yyyy");
-  const nextUpdateDistance = formatDistanceToNow(
-    new Date(insights.nextUpdate),
-    { addSuffix: true }
-  );
+  // Format dates using date-fns with safety checks
+  let lastUpdatedDate, nextUpdateDistance;
+  try {
+    lastUpdatedDate = format(new Date(safeInsights.lastUpdated), "dd/MM/yyyy");
+    nextUpdateDistance = formatDistanceToNow(
+      new Date(safeInsights.nextUpdate),
+      { addSuffix: true }
+    );
+  } catch (error) {
+    lastUpdatedDate = "Unknown";
+    nextUpdateDistance = "Unknown";
+  }
 
   return (
     <div className="space-y-6">
@@ -89,7 +120,7 @@ const DashboardView = ({ insights }) => {
             <OutlookIcon className={`h-4 w-4 ${outlookColor}`} />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{insights.marketOutlook}</div>
+            <div className="text-2xl font-bold">{safeInsights.marketOutlook}</div>
             <p className="text-xs text-muted-foreground">
               Next update {nextUpdateDistance}
             </p>
@@ -105,9 +136,9 @@ const DashboardView = ({ insights }) => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {insights.growthRate.toFixed(1)}%
+              {safeInsights.growthRate.toFixed(1)}%
             </div>
-            <Progress value={insights.growthRate} className="mt-2" />
+            <Progress value={safeInsights.growthRate} className="mt-2" />
           </CardContent>
         </Card>
 
@@ -117,10 +148,10 @@ const DashboardView = ({ insights }) => {
             <BriefcaseIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{insights.demandLevel}</div>
+            <div className="text-2xl font-bold">{safeInsights.demandLevel}</div>
             <div
               className={`h-2 w-full rounded-full mt-2 ${getDemandLevelColor(
-                insights.demandLevel
+                safeInsights.demandLevel
               )}`}
             />
           </CardContent>
@@ -133,7 +164,7 @@ const DashboardView = ({ insights }) => {
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-1">
-              {insights.topSkills.map((skill) => (
+              {safeInsights.topSkills.map((skill) => (
                 <Badge key={skill} variant="secondary">
                   {skill}
                 </Badge>
@@ -153,33 +184,39 @@ const DashboardView = ({ insights }) => {
         </CardHeader>
         <CardContent>
           <div className="h-[400px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={salaryData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip
-                  content={({ active, payload, label }) => {
-                    if (active && payload && payload.length) {
-                      return (
-                        <div className="bg-background border rounded-lg p-2 shadow-md">
-                          <p className="font-medium">{label}</p>
-                          {payload.map((item) => (
-                            <p key={item.name} className="text-sm">
-                              {item.name}: ${item.value}K
-                            </p>
-                          ))}
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                <Bar dataKey="min" fill="#94a3b8" name="Min Salary (K)" />
-                <Bar dataKey="median" fill="#64748b" name="Median Salary (K)" />
-                <Bar dataKey="max" fill="#475569" name="Max Salary (K)" />
-              </BarChart>
-            </ResponsiveContainer>
+            {salaryData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={salaryData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip
+                    content={({ active, payload, label }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <div className="bg-background border rounded-lg p-2 shadow-md">
+                            <p className="font-medium">{label}</p>
+                            {payload.map((item) => (
+                              <p key={item.name} className="text-sm">
+                                {item.name}: ${item.value}K
+                              </p>
+                            ))}
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Bar dataKey="min" fill="#94a3b8" name="Min Salary (K)" />
+                  <Bar dataKey="median" fill="#64748b" name="Median Salary (K)" />
+                  <Bar dataKey="max" fill="#475569" name="Max Salary (K)" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-muted-foreground">No salary data available</p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -194,14 +231,18 @@ const DashboardView = ({ insights }) => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ul className="space-y-4">
-              {insights.keyTrends.map((trend, index) => (
-                <li key={index} className="flex items-start space-x-2">
-                  <div className="h-2 w-2 mt-2 rounded-full bg-primary" />
-                  <span>{trend}</span>
-                </li>
-              ))}
-            </ul>
+            {safeInsights.keyTrends.length > 0 ? (
+              <ul className="space-y-4">
+                {safeInsights.keyTrends.map((trend, index) => (
+                  <li key={index} className="flex items-start space-x-2">
+                    <div className="h-2 w-2 mt-2 rounded-full bg-primary" />
+                    <span>{trend}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-muted-foreground">No trends available</p>
+            )}
           </CardContent>
         </Card>
 
@@ -211,13 +252,17 @@ const DashboardView = ({ insights }) => {
             <CardDescription>Skills to consider developing</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {insights.recommendedSkills.map((skill) => (
-                <Badge key={skill} variant="outline">
-                  {skill}
-                </Badge>
-              ))}
-            </div>
+            {safeInsights.recommendedSkills.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {safeInsights.recommendedSkills.map((skill) => (
+                  <Badge key={skill} variant="outline">
+                    {skill}
+                  </Badge>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground">No recommended skills available</p>
+            )}
           </CardContent>
         </Card>
       </div>

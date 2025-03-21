@@ -14,7 +14,6 @@ model User {
   name          String?
   imageUrl      String?
   industry      String?    // Combined industry-subindustry (e.g., "tech-software-development")
-  industryInsight IndustryInsight? @relation(fields: [industry], references: [industry])
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -27,6 +26,7 @@ model User {
   assessments   Assessment[]
   resume        Resume?
   coverLetter   CoverLetter[]
+  industryInsight IndustryInsight?
 }
 
 model Assessment {
@@ -69,13 +69,12 @@ model CoverLetter {
   @@index([userId])
 }
 
-// Combined Industry Trends and Salary Insights
+// Industry Insights - Now with direct user reference
 model IndustryInsight {
   id            String    @id @default(cuid())
-  industry      String    @unique  // The industry this data belongs to (e.g., "tech-software-development")
-  
-  // Users in this industry
-  users         User[]
+  userId        String    @unique  // One insight per user
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  industry      String    // The industry this data belongs to (e.g., "tech-software-development")
   
   // Salary data
   salaryRanges  Json[]    // Array of { role: string, min: float, max: float, median: float, location: string? }
@@ -95,5 +94,6 @@ model IndustryInsight {
   lastUpdated   DateTime  @default(now())
   nextUpdate    DateTime  // Scheduled update time
 
+  @@index([userId])
   @@index([industry])
 }
