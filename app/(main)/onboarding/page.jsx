@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, redirect } from "next/navigation";
 import { industries } from "@/data/industries";
 import OnboardingForm from "./_components/onboarding-form";
@@ -30,7 +30,7 @@ const INDUSTRIES_DATA = [
   },
 ];
 
-export default function OnboardingPage() {
+function OnboardingContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [shouldRedirect, setShouldRedirect] = useState(false);
   const searchParams = useSearchParams();
@@ -74,5 +74,17 @@ export default function OnboardingPage() {
     <div className="container mx-auto">
       <OnboardingForm industries={industries} />
     </div>
+  );
+}
+
+export default function OnboardingPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    }>
+      <OnboardingContent />
+    </Suspense>
   );
 }
