@@ -147,39 +147,35 @@ export default function ResumeBuilder({ initialContent }) {
   };
 
   return (
-    <div data-color-mode="light" className="space-y-4">
-      <div className="flex flex-col md:flex-row justify-between items-center gap-2">
-        <h1 className="font-bold gradient-title text-5xl md:text-6xl">
+    <div className="px-2 sm:px-4 md:px-6 py-6 max-w-[1200px] mx-auto">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">
           Resume Builder
         </h1>
-        <div className="space-x-2">
+        <div className="flex gap-2">
           <Button
-            variant="destructive"
-            onClick={handleSubmit(onSubmit)}
+            variant="outline"
+            onClick={generatePDF}
+            disabled={!previewContent}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Export PDF
+          </Button>
+          <Button
+            onClick={async () => {
+              await handleSubmit(onSubmit)();
+            }}
             disabled={isSaving}
           >
             {isSaving ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 Saving...
               </>
             ) : (
               <>
-                <Save className="h-4 w-4" />
+                <Save className="h-4 w-4 mr-2" />
                 Save
-              </>
-            )}
-          </Button>
-          <Button onClick={generatePDF} disabled={isGenerating}>
-            {isGenerating ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Generating PDF...
-              </>
-            ) : (
-              <>
-                <Download className="h-4 w-4" />
-                Download PDF
               </>
             )}
           </Button>

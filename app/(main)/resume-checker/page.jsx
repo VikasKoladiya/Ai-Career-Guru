@@ -147,15 +147,17 @@ function ResumeCheckerPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-5xl">
+    <div className="container mx-auto py-6 px-4 sm:px-6 md:px-8">
       <h1 className="text-2xl font-bold mb-4 sm:mb-6">Resume ATS Analyzer</h1>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-        <div className="space-y-4">
-          <Card className="h-full">
-            <CardHeader className="pb-2 sm:pb-4">
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Form Section */}
+        <div>
+          {/* File Upload Card */}
+          <Card className="mb-6">
+            <CardHeader>
               <CardTitle className="text-lg sm:text-xl">Upload Your Resume</CardTitle>
-              <CardDescription className="text-sm">
+              <CardDescription>
                 Upload your resume and provide a job description to check ATS compatibility
               </CardDescription>
             </CardHeader>
@@ -269,14 +271,15 @@ function ResumeCheckerPage() {
             </CardContent>
           </Card>
         </div>
-
+        
+        {/* Results Section */}
         <div>
           {result ? (
-            <Card className="w-full shadow-md">
+            <Card>
               <CardHeader className="pb-2 sm:pb-4">
-                <CardTitle className="flex justify-between items-center text-base sm:text-lg">
-                  <span>ATS Compatibility Score</span>
-                  <span className={`text-xl sm:text-2xl font-bold ${
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <span>ATS Match Score:</span>
+                  <span className={`font-bold ${
                     result.score >= 80 
                       ? "text-green-500" 
                       : result.score >= 60 

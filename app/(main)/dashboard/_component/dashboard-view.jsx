@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   BarChart,
   Bar,
@@ -29,6 +29,24 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 
 const DashboardView = ({ insights }) => {
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
+  
+  useEffect(() => {
+    // Check screen size on mount
+    const checkScreenSize = () => {
+      setIsSmallScreen(window.innerWidth < 640);
+    };
+    
+    // Set initial value
+    checkScreenSize();
+    
+    // Add resize listener
+    window.addEventListener('resize', checkScreenSize);
+    
+    // Cleanup
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
+
   // Safety check for null or invalid insights
   if (!insights || typeof insights !== 'object') {
     return (
@@ -183,35 +201,62 @@ const DashboardView = ({ insights }) => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-[400px]">
+          <div className="h-[300px] sm:h-[350px] md:h-[400px]">
             {salaryData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={salaryData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip
-                    content={({ active, payload, label }) => {
-                      if (active && payload && payload.length) {
-                        return (
-                          <div className="bg-background border rounded-lg p-2 shadow-md">
-                            <p className="font-medium">{label}</p>
-                            {payload.map((item) => (
-                              <p key={item.name} className="text-sm">
-                                {item.name}: ${item.value}K
-                              </p>
-                            ))}
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                  <Bar dataKey="min" fill="#94a3b8" name="Min Salary (K)" />
-                  <Bar dataKey="median" fill="#64748b" name="Median Salary (K)" />
-                  <Bar dataKey="max" fill="#475569" name="Max Salary (K)" />
-                </BarChart>
-              </ResponsiveContainer>
+              <>
+                <p className="text-xs text-muted-foreground text-center block sm:hidden mb-2">
+                  <svg className="w-4 h-4 inline-block mr-1 rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                  </svg>
+                  Rotate device for better view
+                </p>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart 
+                    data={salaryData} 
+                    barSize={isSmallScreen ? (salaryData.length > 3 ? 12 : 20) : undefined}
+                    barGap={isSmallScreen ? (salaryData.length > 3 ? 1 : 3) : undefined}
+                    barCategoryGap={isSmallScreen ? (salaryData.length > 3 ? "8%" : "15%") : undefined}
+                    margin={isSmallScreen ? { top: 5, right: 5, left: 5, bottom: 20 } : undefined}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="name" 
+                      tick={{ fontSize: isSmallScreen ? 10 : 12 }}
+                      interval={isSmallScreen ? (salaryData.length > 4 ? 1 : 0) : 0}
+                      height={isSmallScreen ? 60 : 50}
+                      angle={isSmallScreen ? -45 : 0}
+                      textAnchor={isSmallScreen ? "end" : "middle"}
+                      tickFormatter={(value) => {
+                        // For small screens, truncate role names if they're too long
+                        return isSmallScreen && value.length > 8
+                          ? `${value.substring(0, 8)}...`
+                          : value;
+                      }}
+                    />
+                    <YAxis tick={{ fontSize: isSmallScreen ? 10 : 12 }} />
+                    <Tooltip
+                      content={({ active, payload, label }) => {
+                        if (active && payload && payload.length) {
+                          return (
+                            <div className="bg-background border rounded-lg p-2 shadow-md">
+                              <p className="font-medium">{label}</p>
+                              {payload.map((item) => (
+                                <p key={item.name} className="text-sm">
+                                  {item.name}: ${item.value}K
+                                </p>
+                              ))}
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Bar dataKey="min" fill="#94a3b8" name="Min Salary (K)" />
+                    <Bar dataKey="median" fill="#64748b" name="Median Salary (K)" />
+                    <Bar dataKey="max" fill="#475569" name="Max Salary (K)" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </>
             ) : (
               <div className="flex items-center justify-center h-full">
                 <p className="text-muted-foreground">No salary data available</p>

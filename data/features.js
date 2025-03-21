@@ -1,4 +1,4 @@
-import { BrainCircuit, Briefcase, LineChart, ScrollText } from "lucide-react";
+import { BrainCircuit, Briefcase, Gauge, LineChart, ScrollText } from "lucide-react";
 
 export const features = [
   {
@@ -23,5 +23,10 @@ export const features = [
     icon: <ScrollText className="w-10 h-10 mb-4 text-primary" />,
     title: "Smart Resume Creation",
     description: "Generate ATS-optimized resumes with AI assistance.",
+  },
+  {
+    icon: <Gauge className="w-10 h-10 mb-4 text-primary" />,
+    title: "Resume ATS Checker",
+    description: "Analyze your resume against job descriptions to improve ATS compatibility.",
   },
 ];
